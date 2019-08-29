@@ -10,5 +10,4 @@ RUN apt-get update && apt-get install -y \
     libpng-dev
 RUN pip install -r requirements.txt
 ENV DOCKER_CONTAINER=true
-VOLUME /mnt/HD2/Pr0n/Picturesets/:/New
 CMD ["python", "resizer.py"]

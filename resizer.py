@@ -24,7 +24,7 @@ class Bild(Model):
     processed = BooleanField(default=False)
 
     class Meta:
-        database = db 
+        database = db
 
 
 def processPath(pathtoprocess):
@@ -94,8 +94,10 @@ if __name__ == '__main__':
         cfgSchedule = config["RESIZER"]["schedule"]
         if isTimeFormat(cfgSchedule):
             schedule.every().day.at(cfgSchedule).do(job)
+            logger.info("ResiZer will run daily at {}", str(cfgSchedule))
         elif int(cfgSchedule) > 0 and int(cfgSchedule) < 1448:
             schedule.every(cfgSchedule).minutes.do(job)
+            logger.info("ResiZer will run every {} minutes", str(cfgSchedule))
         else:
             logger.critical("Unrecognized schedule format, please check the resizer.ini description!")
             sys.exit("Scheduling Error")
