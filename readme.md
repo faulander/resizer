@@ -1,4 +1,4 @@
-# ResIzer
+# ResiZer
 
 ResiZer is a script, which recursively traverses directories and resizes images and deletes unwanted files.
 
