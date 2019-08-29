@@ -1,10 +1,19 @@
 import configparser
 import os
+import sys
 from loguru import logger
 from PIL import Image
 import schedule
 import time
 from peewee import *
+
+
+def isTimeFormat(input):
+    try:
+        time.strptime(input, '%H:%M')
+        return True
+    except ValueError:
+        return False
 
 
 db = SqliteDatabase('images.db')
@@ -63,7 +72,7 @@ def resizeImage(image, maxsize=3500):
 def processImages():
     for bild in Bild.select().where(Bild.processed == False):
         imageFull = os.path.join(cfgInputPath, bild.fullpath)
-        resizeImage(imageFull)
+        resizeImage(imageFull, cfgMaxsize)
 
 
 def job():
@@ -78,14 +87,22 @@ if __name__ == '__main__':
     config.read("resizer.ini")
     SECRET_KEY = os.environ.get('DOCKER_CONTAINER', False)
     lstUnwantedExtensions = (config["RESIZER"]["unwantedextensions"]).split(",")
+    cfgMaxsize = int(config["RESIZER"]["maxsize"])
     if SECRET_KEY:
         logger.info("Script runs in an DOCKER Environment")
-        cfgInputPath = config["RESIZER"]["inputpath"]
-        schedule.every().day.at("22:00").do(job)
+        cfgInputPath = config["RESIZER"]["dockerpath"]
+        cfgSchedule = config["RESIZER"]["schedule"]
+        if isTimeFormat(cfgSchedule):
+            schedule.every().day.at(cfgSchedule).do(job)
+        elif int(cfgSchedule) > 0 and int(cfgSchedule) < 1448:
+            schedule.every(cfgSchedule).minutes.do(job)
+        else:
+            logger.critical("Unrecognized schedule format, please check the resizer.ini description!")
+            sys.exit("Scheduling Error")
         while True:
             schedule.run_pending()
             time.sleep(1)
     else:
         logger.info("Script does not run in DOCKER Environment")
-        cfgInputPath = "/home/harald/Europa/HD2/Pr0n/Picturesets/"
+        cfgInputPath = config["RESIZER"]["localpath"]
         job()
